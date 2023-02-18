@@ -72,3 +72,45 @@ vi i7_barcodes.tsv
 #and run
 
 sbatch i7_parse_quija.sh
+
+
+
+
+#####Important notes 
+
+###since novaseq lanes are much larger the script to create the index needs to be different than for hiseq or miseq
+
+#in this path is a specific example of a Novaseq lane I recently and this has also been confirmed to work by Akanksha
+
+/burg/palab/users/ap3815/Dsim_RecombinationMaps/raw_reads/MedGenome_Jun22
+
+#module load gcc/7.2.0
+
+#make sure the environment is in python 2 as the script uses py2 (it may be that the server already has py2 loaded, this changes, so you can check by typing pyton then checking the version)
+conda activate py2
+
+
+#STEP 3
+#If dual index, start by demuxing i5
+
+one may get this error while demuxing by i5/getting indexes
+
+sort: write failed: /tmp/sorthBJk4V: No space left on device
+
+
+The typical solution to this sort of issue is to tell GNU sort to place the temporary files in a location that has more free space than /tmp.  As per `man sort`, the `-T [directory to use for temp files]` option is what you want.  So do:
+`[path to ParsingPipeline]/ReadHistogram.sh [index read file] "-T [directory to use for temp files]" > [index sequence count list]`
+
+
+[ap3815@ruth Dsim_RecombinationMaps]$ sbatch create_index.sh 
+Submitted batch job 2550460
+
+#neeeded to change the settings in the pipeline
+
+#find confirmed barcodes in the reads
+i5_barcodes_confirmed
+
+#run i5 demux 
+
+sbatch i5_parse.sh 
+
