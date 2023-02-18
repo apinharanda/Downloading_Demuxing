@@ -1,0 +1,38 @@
+###AP v2 4Feb 22
+
+###Download reads from SRA
+
+#Because we have the sra tools installed we can do fastqdump directly from the server the only thing we need is the SRA names
+
+#First activate base_genomics
+
+conda activate base_genomics 
+
+#cd to a location in your directory where you want to keep this raw data.
+
+#Then create a script with the following header:
+
+vi download_reads.sh
+
+#!/bin/sh
+#SBATCH -N 1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+#SBATCH --account=palab
+#SBATCH --mem=96000
+#SBATCH -J downloadReads
+
+fastq-dump --gzip SRX2746705
+fastq-dump --gzip SRX2746706
+fastq-dump --gzip SRX2746711 
+fastq-dump --gzip SRX2746712
+fastq-dump --gzip SRX2746717
+fastq-dump --gzip SRX2746718
+
+#Then run
+
+sbatch download_reads.sh 
+
+#note: if reads are PE add --split-files to the fastq-dump command
+#to check fastq options do fastq-dump --help
+

@@ -1,0 +1,74 @@
+#Demux
+#ap3815
+#26 Set 2021
+
+#load modules
+module load gcc/7.2.0
+###it may also work with others
+#make sure the environment is in python 2 as the script uses py2 (it may be that the server already has py2 loaded, this changes, so you can check by typing pyton then checking the version)
+conda activate py2
+
+####################################
+#STEP 1 
+#create reads with index when sequence centre does not provide it
+#use from https://github.com/YourePrettyGood/ParsingPipeline
+#the awk script generates gzipped index read FASTQ files based on the index sequences found in the standard Illumina 1.8+ header
+#This enables parsing using divideConquerParser.sh when a sequencing center only provides you with unparsed R1 and R2 FASTQ files
+#e.g. Novogene or MedGenome
+
+gzip -dc [READ_1].fastq.gz | /usr/bin/time -v [path to ParsingPipeline]/extractIndexReads.awk -v "prefix=[add sample name]" 2> [add sample name].stderr > [add sample name].stdout
+
+
+####################################
+#STEP 2
+#Generate read histograms for the resultant I1 and I2 read files
+#read names have to match the ones created above
+
+gzip -dc [add sample name]_I1.fastq.gz | [path to ParsingPipeline]/ReadHistogram.sh | [path to ParsingPipeline]/labelIndexReadHistogram.pl -b [add sample name]_i7_barcodes.tsv > [add sample name]_I1_Histogram.tsv
+gzip -dc [add sample name]_I2.fastq.gz | [path to ParsingPipeline]/ReadHistogram.sh | [path to ParsingPipeline]/labelIndexReadHistogram.pl -b [add sample name]_i5_barcodes.tsv > [add sample name]_I2_Histogram.tsv
+
+#Usage for later i5 parsing with divideConquerParser.sh might look like:
+[path to ParsingPipeline]/divideConquerParser.sh 4 "Pgc20_L2_R1.fastq.gz Pgc20_L2_R2.fastq.gz Pgc20_L2_I1.fastq.gz Pgc20_L2_I2.fastq.gz" 8 Pgc20_L2_i5_barcodes.tsv 4
+
+#If you're working with NovaSeq data, you might run into memory allocation issues (see Download_from_sequencing_centre_demux_eg.log for explanation). In this case, use:
+[path to ParsingPipeline]/ReadHistogram.sh [index read file] "-T [directory to use for temp files]" | [path to ParsingPipeline]/labelIndexReadHistogram.pl -b [add sample name]_i7_barcodes.tsv > [add sample name]_I1_Histogram.tsv
+
+#make sure directory for temp files is in your scratch directory so it has enough space.
+####################################
+#STEP 3
+#If dual index, start by demuxing i5
+
+#create a file i5_barcodes.tsv where barcodes and identifying are addedm so just indead of using all the list
+#files need to be tab separated
+
+vi i5_barcodes.tsv
+#[ID]\t [i5 index]
+
+#there is an example file in the MSG_Terremoto
+
+####################################
+#STEP 4
+#Create a slurm script to parse reads by i5
+
+#check example in the folder
+#and run
+
+sbatch i5_parse_quija.sh
+
+#####################################
+#STEP 5
+#Create a slurm script to parse reads by i7
+#needs to be done in a separate directory 
+
+mkdir i7_dir
+
+#make symbolic links from the i5 parsed reads
+#ln -s
+
+#create barcode file like in i5
+vi i7_barcodes.tsv
+
+#check example in the folder
+#and run
+
+sbatch i7_parse_quija.sh
